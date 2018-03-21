@@ -5,7 +5,7 @@ using System.Web;
 
 namespace EntityFramework.DbValidator
 {
-    public class ColumnData
+    public class ColumnMetaData
     {
         public string DataType { get; set; }
         public string ColumnName { get; set; }
@@ -16,7 +16,7 @@ namespace EntityFramework.DbValidator
             if (obj == null || GetType() != obj.GetType())
                 return false;
 
-            ColumnData p = (ColumnData)obj;
+            ColumnMetaData p = (ColumnMetaData)obj;
             return p.IsNullable == IsNullable && p.ColumnName == ColumnName && p.DataType == DataType;
         }
 

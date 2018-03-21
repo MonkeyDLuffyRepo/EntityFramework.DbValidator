@@ -10,7 +10,7 @@ namespace EntityFramework.DbValidator
     {
         public string Description = "ColumnMismatch";
         public string TableName { get; set; }
-        public ColumnData Column { get; set; }
+        public ColumnMetaData Column { get; set; }
 
         public string GetFix()
         {
@@ -21,7 +21,7 @@ namespace EntityFramework.DbValidator
     public class MessingColumnResult : IColumnComparisonResult
     {
         public string TableName { get; set; }
-        public ColumnData Column { get; set; }
+        public ColumnMetaData Column { get; set; }
 
         public string GetFix()
         {
