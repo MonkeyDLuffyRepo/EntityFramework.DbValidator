@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Entity;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Core.Objects;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
 using System.Linq;
 
 namespace EntityFramework.DbValidator
@@ -8,39 +12,44 @@ namespace EntityFramework.DbValidator
     public class DbValidator
     {
         #region Private Stuff
-        private ObjectContext objectContext;
+        private readonly ObjectContext ObjectContext;
+        private readonly string DatabaseName;
+
         private class Result
         {
             public string TableName { get; set; }
             public string ColumnName { get; set; }
             public string IsNullable { get; set; }
             public string DataType { get; set; }
+            public int? CharacterMaximumLength { get; set; }
         }
         private IEnumerable<TableMetaData> GetStorageModelTables()
         {
-            return (from meta in objectContext.MetadataWorkspace.GetItems(DataSpace.SSpace)
+            return (from meta in ObjectContext.MetadataWorkspace.GetItems(DataSpace.SSpace)
                                      .Where(m => m.BuiltInTypeKind == BuiltInTypeKind.EntityType)
                     let properties = meta is EntityType ? (meta as EntityType).Properties : null
                     select new TableMetaData
                     {
                         TableName = (meta as EntityType).Name,
                         ColumnMetadatas = (from p in properties
-                                   select new ColumnMetaData
-                                   {
-                                       ColumnName = p.Name,
-                                       DataType = p.TypeUsage.EdmType.Name,
-                                       IsNullable = p.Nullable
-                                   }).ToList()
+                                           select new ColumnMetaData
+                                           {
+                                               ColumnName = p.Name,
+                                               DataType = p.TypeUsage.EdmType.Name,
+                                               IsNullable = p.Nullable,
+                                               CharacterMaximumLength = p.MaxLength
+                                           }).ToList()
                     }).ToList();
         }
         private IEnumerable<TableMetaData> GetDbTables()
         {
-            var sql = $@"SELECT COLUMNS.TABLE_NAME as TableName, COLUMNS.COLUMN_NAME as ColumnName , COLUMNS.IS_NULLABLE as IsNullable, COLUMNS.DATA_TYPE as DataType 
+            var sql = $@"SELECT COLUMNS.TABLE_NAME as TableName, COLUMNS.COLUMN_NAME as ColumnName ,
+COLUMNS.IS_NULLABLE as IsNullable, COLUMNS.DATA_TYPE as DataType, COLUMNS.CHARACTER_MAXIMUM_LENGTH as CharacterMaximumLength 
 FROM INFORMATION_SCHEMA.TABLES AS TABLES 
 LEFT OUTER JOIN INFORMATION_SCHEMA.COLUMNS AS COLUMNS 
 ON TABLES.TABLE_NAME = COLUMNS.TABLE_NAME 
-WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{objectContext.Connection.Database}') AND (TABLES.TABLE_SCHEMA = N'dbo')";
-            var dbTables = objectContext.ExecuteStoreQuery<Result>(sql).ToList().GroupBy(r => r.TableName)
+WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{DatabaseName}') AND (TABLES.TABLE_SCHEMA = N'dbo')";
+            var dbTables = ObjectContext.ExecuteStoreQuery<Result>(sql).ToList().GroupBy(r => r.TableName)
                 .Select(gr => new TableMetaData
                 {
                     TableName = gr.Key,
@@ -49,10 +58,11 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{objectCo
                     {
                         ColumnName = r.ColumnName,
                         IsNullable = r.IsNullable == "YES",
-                        DataType = r.DataType
+                        DataType = r.DataType,
+                        CharacterMaximumLength = r.CharacterMaximumLength
                     }).ToList()
                 });
-            return dbTables;
+            return dbTables.ToList();
         }
         private static IColumnComparisonResult CheckColumn(string tableName, TableMetaData dbTable, ColumnMetaData storageModelColumn)
         {
@@ -91,18 +101,25 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{objectCo
         }
         #endregion
 
-        public DbValidator(ObjectContext objectContext)
+        public DbValidator(DbContext context)
         {
-            this.objectContext = objectContext;
+            ObjectContext = ((IObjectContextAdapter)context).ObjectContext;
+            DatabaseName = context.Database.Connection.Database;
         }
-
         public List<ITableComparisonResult> Validate()
         {
-            var ctxTables = GetStorageModelTables();
+            var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
-            return ctxTables
+            return storageModelTables
                 .Select(ctxTable => CheckTable(dbTables, ctxTable))
                 .ToList();
+        }
+
+
+        public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)
+        {
+            var results = Validate().Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.GetFix());
+            return string.Join(delimiter, results);
         }
     }
 }

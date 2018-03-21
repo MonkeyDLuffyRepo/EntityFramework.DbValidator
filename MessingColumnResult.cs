@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace EntityFramework.DbValidator
+﻿namespace EntityFramework.DbValidator
 {
-
     public class ColumnMismatchResult : IColumnComparisonResult
     {
         public string Description = "ColumnMismatch";
@@ -14,7 +8,8 @@ namespace EntityFramework.DbValidator
 
         public string GetFix()
         {
-            return $"ALTER TABLE {TableName} ALTER COLUMN {Column.ColumnName} {Column.DataType} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
+            var datatype = Column.DataType + ((DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
+            return $"ALTER TABLE {TableName} ALTER COLUMN {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
     }
 
@@ -25,7 +20,8 @@ namespace EntityFramework.DbValidator
 
         public string GetFix()
         {
-            return $"ALTER TABLE {TableName} ADD {Column.ColumnName} {Column.DataType} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
+            var datatype = Column.DataType + ((DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
+            return $"ALTER TABLE {TableName} ADD {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
     }
 
