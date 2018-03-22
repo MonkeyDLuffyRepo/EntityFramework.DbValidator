@@ -14,7 +14,6 @@ namespace EntityFramework.DbValidator
         #region Private Stuff
         private readonly ObjectContext ObjectContext;
         private readonly string DatabaseName;
-
         private class SqlQueryResult
         {
             public string TableName { get; set; }
@@ -23,9 +22,9 @@ namespace EntityFramework.DbValidator
             public string DataType { get; set; }
             public int? CharacterMaximumLength { get; set; }
         }
-        private IEnumerable<TableMetaData> GetStorageModelTables()
+        private TableCollection GetStorageModelTables()
         {
-            return (from meta in ObjectContext.MetadataWorkspace.GetItems(DataSpace.SSpace)
+            var tables= (from meta in ObjectContext.MetadataWorkspace.GetItems(DataSpace.SSpace)
                                      .Where(m => m.BuiltInTypeKind == BuiltInTypeKind.EntityType)
                     let properties = meta is EntityType ? (meta as EntityType).Properties : null
                     select new TableMetaData
@@ -40,8 +39,9 @@ namespace EntityFramework.DbValidator
                                                CharacterMaximumLength = p.MaxLength
                                            }).ToList()
                     }).ToList();
+            return new TableCollection(tables);
         }
-        private IEnumerable<TableMetaData> GetDbTables()
+        private TableCollection GetDbTables()
         {
             var sql = $@"SELECT COLUMNS.TABLE_NAME as TableName, COLUMNS.COLUMN_NAME as ColumnName ,
 COLUMNS.IS_NULLABLE as IsNullable, COLUMNS.DATA_TYPE as DataType, COLUMNS.CHARACTER_MAXIMUM_LENGTH as CharacterMaximumLength 
@@ -62,42 +62,7 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
                         CharacterMaximumLength = r.CharacterMaximumLength
                     }).ToList()
                 });
-            return dbTables.ToList();
-        }
-        private static ColumnComparisonResult CheckColumn(string tableName, TableMetaData dbTable, ColumnMetaData storageModelColumn)
-        {
-            var dbColumn = dbTable.GetColumnMetaData(storageModelColumn.ColumnName);
-            if (dbColumn != null)
-            {
-                if (!dbColumn.Equals(storageModelColumn))
-                {
-                    return new ColumnMismatchResult { Column = storageModelColumn, TableName = tableName };
-                }
-                return null;
-            }
-            else
-            {
-                return new MessingColumnResult { TableName = tableName, Column = storageModelColumn };
-            }
-        }
-        private static TableComparisonResult CheckTable(IEnumerable<TableMetaData> dbTables, TableMetaData storageModelTable)
-        {
-            var dbTable = dbTables.Where(e => e.TableName == storageModelTable.TableName).FirstOrDefault();
-            if (dbTable != null)
-            {
-                var tableCheckResult = new MessingColumnsResult(storageModelTable.TableName);
-                foreach (var ctxColumn in storageModelTable.ColumnMetadatas)
-                {
-                    var result = CheckColumn(storageModelTable.TableName, dbTable, ctxColumn);
-                    if (result != null)
-                        tableCheckResult.ColumnComparisonResults.Add(result);
-                }
-                return tableCheckResult;
-            }
-            else
-            {
-                return new MessingTableResult { Table = storageModelTable };
-            }
+            return new TableCollection(dbTables.ToList());
         }
         #endregion
 
@@ -110,12 +75,10 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
         {
             var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
-            return storageModelTables
-                .Select(ctxTable => CheckTable(dbTables, ctxTable))
+            return storageModelTables.Tables
+                .Select(storageModelTable => dbTables.CheckForTable(storageModelTable))
                 .ToList();
         }
-
-
         public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)
         {
             var results = Validate().Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);

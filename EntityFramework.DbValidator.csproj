@@ -56,6 +56,7 @@
     <Compile Include="Helpers\DataType.cs" />
     <Compile Include="DbValidator.cs" />
     <Compile Include="ColumnComparisonResult.cs" />
+    <Compile Include="TableCollection.cs" />
     <Compile Include="TableComparisonResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TableMetaData.cs" />

@@ -7,6 +7,11 @@ namespace EntityFramework.DbValidator
         public Lazy<string> UpgradeScript { get; set; }
         public string TableName { get; set; }
         public ColumnMetaData Column { get; set; }
+        public ColumnComparisonResult(ColumnMetaData column, string tableName)
+        {
+            TableName = tableName;
+            Column = column;
+        }
     }
 
     public class ColumnMismatchResult : ColumnComparisonResult
@@ -18,13 +23,13 @@ namespace EntityFramework.DbValidator
             return $"ALTER TABLE {TableName} ALTER COLUMN {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
         #endregion
-        public ColumnMismatchResult()
+        public ColumnMismatchResult(ColumnMetaData column, string tableName) : base(column, tableName)
         {
             UpgradeScript = new Lazy<string>(GetUpgradeScript);
         }
     }
 
-    public class MessingColumnResult : ColumnComparisonResult
+    public class ColumnMessingResult : ColumnComparisonResult
     {
         #region Private Stuff
         private string GetUpgradeScript()
@@ -33,7 +38,7 @@ namespace EntityFramework.DbValidator
             return $"ALTER TABLE {TableName} ADD {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
         #endregion
-        public MessingColumnResult()
+        public ColumnMessingResult(ColumnMetaData column, string tableName) : base(column, tableName)
         {
             UpgradeScript = new Lazy<string>(GetUpgradeScript);
         }

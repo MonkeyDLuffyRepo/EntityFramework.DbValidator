@@ -10,7 +10,7 @@ namespace EntityFramework.DbValidator
         public string TableName;
     }
 
-    public class MessingColumnsResult : TableComparisonResult
+    public class ColumnsMessingResult : TableComparisonResult
     {
         #region Private Stuff
         private string[] GetUpgradeScript()
@@ -19,7 +19,7 @@ namespace EntityFramework.DbValidator
         }
         #endregion
 
-        public MessingColumnsResult(string tableName)
+        public ColumnsMessingResult(string tableName)
         {
             TableName = tableName;
             ColumnComparisonResults = new List<ColumnComparisonResult>();
@@ -28,19 +28,29 @@ namespace EntityFramework.DbValidator
         public List<ColumnComparisonResult> ColumnComparisonResults { get; set; }
     }
 
-    public class MessingTableResult : TableComparisonResult
+    public class TableMessingResult : TableComparisonResult
     {
-        public TableMetaData Table { get; set; }
-        public MessingTableResult()
-        {
-            UpgradeScript = new Lazy<string[]>(GetUpgradeScript);
-        }
         #region Private Stuff
         private string[] GetUpgradeScript()
         {
             var columns = string.Join(", ", Table.ColumnMetadatas.Select(c => c.ColumnName + " " + c.DataType + " " + (c.IsNullable ? "NULL" : "NOT NULL")));
             return new string[] { $"CREATE TABLE {Table.TableName} ({columns});" };
-        } 
+        }
         #endregion
+        public TableMetaData Table { get; }
+        public TableMessingResult(TableMetaData table)
+        {
+            Table = table;
+            TableName = table.TableName;
+            UpgradeScript = new Lazy<string[]>(GetUpgradeScript);
+        }
+    }
+
+    public class TableMatchResult : TableComparisonResult {
+        public TableMatchResult(string tableName)
+        {
+            TableName = tableName;
+            UpgradeScript = new Lazy<string[]>(() => new string[] { });
+        }
     }
 }
