@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace EntityFramework.DbValidator
@@ -19,13 +20,13 @@ namespace EntityFramework.DbValidator
         }
         #endregion
 
-        public ColumnsMessingResult(string tableName)
+        public ColumnsMessingResult(string tableName, ImmutableList<ColumnComparisonResult> columnComparisonResults)
         {
             TableName = tableName;
-            ColumnComparisonResults = new List<ColumnComparisonResult>();
+            ColumnComparisonResults = columnComparisonResults;
             UpgradeScript = new Lazy<string[]>(GetUpgradeScript);
         }
-        public List<ColumnComparisonResult> ColumnComparisonResults { get; set; }
+        public readonly ImmutableList<ColumnComparisonResult> ColumnComparisonResults;
     }
 
     public class TableMessingResult : TableComparisonResult
@@ -37,7 +38,7 @@ namespace EntityFramework.DbValidator
             return new string[] { $"CREATE TABLE {Table.TableName} ({columns});" };
         }
         #endregion
-        public TableMetaData Table { get; }
+        public readonly TableMetaData Table;
         public TableMessingResult(TableMetaData table)
         {
             Table = table;

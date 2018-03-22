@@ -44,14 +44,13 @@ namespace EntityFramework.DbValidator
 
         public ColumnsMessingResult CheckForMessingColumns(TableMetaData refTable)
         {
-            var tableCheckResult = new ColumnsMessingResult(refTable.TableName);
-            foreach (var storageModelColumn in refTable.ColumnMetadatas)
-            {
-                var result = CheckColumn(storageModelColumn);
-                if (result != null)
-                    tableCheckResult.ColumnComparisonResults.Add(result);
-            }
-            return tableCheckResult.ColumnComparisonResults.Count == 0 ? null : tableCheckResult;
+            var columnResults = refTable.ColumnMetadatas
+                .Select(CheckColumn)
+                .Where(result => result != null)
+                .ToList();
+
+            return columnResults.Count == 0 ? null :
+                new ColumnsMessingResult(refTable.TableName, columnResults.ToImmutableList());
         }
     }
 }
