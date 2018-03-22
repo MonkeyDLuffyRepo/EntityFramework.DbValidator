@@ -23,7 +23,7 @@ namespace EntityFramework.DbValidator
         }
         private ColumnMetaData GetColumnMetaData(string columnName)
         {
-            return ColumnMetadatas.Where(c => c.ColumnName == columnName).FirstOrDefault();
+            return ColumnMetadatas.Where(c => c.ColumnName.ToLower() == columnName.ToLower()).FirstOrDefault();
         }
         #endregion
 
