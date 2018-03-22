@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColumnMetaData.cs" />
-    <Compile Include="DataType.cs" />
+    <Compile Include="Helpers\DataType.cs" />
     <Compile Include="DbValidator.cs" />
     <Compile Include="ColumnComparisonResult.cs" />
     <Compile Include="TableComparisonResult.cs" />

@@ -14,7 +14,7 @@ namespace EntityFramework.DbValidator
         #region Private Stuff
         private string GetUpgradeScript()
         {
-            var datatype = Column.DataType + ((DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
+            var datatype = Column.DataType + ((Helpers.DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
             return $"ALTER TABLE {TableName} ALTER COLUMN {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
         #endregion
@@ -29,7 +29,7 @@ namespace EntityFramework.DbValidator
         #region Private Stuff
         private string GetUpgradeScript()
         {
-            var datatype = Column.DataType + ((DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
+            var datatype = Column.DataType + ((Helpers.DataTypes.IsNvarchar(Column.DataType) ? $"({Column.CharacterMaximumLength})" : ""));
             return $"ALTER TABLE {TableName} ADD {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
         #endregion
