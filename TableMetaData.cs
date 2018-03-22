@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Data.Entity.Core.Metadata.Edm;
 using System.Linq;
 
 namespace EntityFramework.DbValidator
@@ -25,8 +27,27 @@ namespace EntityFramework.DbValidator
         }
         #endregion
 
-        public string TableName { get; set; }
-        public List<ColumnMetaData> ColumnMetadatas { get; set; }
+        public readonly string TableName;
+        public ImmutableList<ColumnMetaData> ColumnMetadatas;
+
+        public TableMetaData(string table, ImmutableList<ColumnMetaData> columns)
+        {
+            TableName = table;
+            ColumnMetadatas = columns;
+        }
+
+        public static TableMetaData FromEntityType(EntityType entityType)
+        {
+            var columns = entityType.Properties.Select(p =>
+                new ColumnMetaData
+                {
+                    ColumnName = p.Name,
+                    DataType = p.TypeUsage.EdmType.Name,
+                    IsNullable = p.Nullable,
+                    CharacterMaximumLength = p.MaxLength
+                });
+            return new TableMetaData(entityType.Name, columns.ToImmutableList());
+        }
 
         public ColumnsMessingResult CheckForMessingColumns(TableMetaData refTable)
         {

@@ -8,12 +8,12 @@ namespace EntityFramework.DbValidator
 {
     public class TableCollection
     {
-        public TableCollection(List<TableMetaData> tables)
+        public TableCollection(IEnumerable<TableMetaData> tables)
         {
             Tables = tables;
         }
 
-        public List<TableMetaData> Tables { get; set; }
+        public IEnumerable<TableMetaData> Tables { get; set; }
 
         public TableComparisonResult CheckForTable(TableMetaData refTable)
         {
