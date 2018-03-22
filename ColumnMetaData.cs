@@ -9,7 +9,7 @@
 
         public ColumnMetaData(string columnName, string dataType, bool nullable, int? maxLength)
         {
-            ColumnName = columnName;
+            ColumnName = columnName.ToLower();
             DataType = dataType;
             IsNullable = nullable;
             CharacterMaximumLength = maxLength;

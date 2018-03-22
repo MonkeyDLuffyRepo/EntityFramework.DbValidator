@@ -54,17 +54,19 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
             ObjectContext = ((IObjectContextAdapter)context).ObjectContext;
             DatabaseName = context.Database.Connection.Database;
         }
-        public List<TableComparisonResult> Validate()
+        public List<TableComparisonResult> Validate(string[] tableNames)
         {
             var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
+
             return storageModelTables.Tables
+                .Where(t=> tableNames.Contains(t.TableName))
                 .Select(storageModelTable => dbTables.CheckForTable(storageModelTable))
                 .ToList();
         }
         public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)
         {
-            var results = Validate().Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
+            var results = Validate(tableNames).Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
             return string.Join(delimiter, results);
         }
     }
