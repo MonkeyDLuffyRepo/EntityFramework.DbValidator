@@ -1,19 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace EntityFramework.DbValidator
+﻿namespace EntityFramework.DbValidator
 {
     public class ColumnMetaData
     {
-        #region Private Stuff
-        private string columnName;
-        #endregion
-        public string DataType { get; set; }
-        public string ColumnName { get { return columnName; } set { columnName = value.ToLower(); } }
-        public bool IsNullable { get; set; }
-        public int? CharacterMaximumLength { get; set; }
+        public readonly string DataType;
+        public readonly string ColumnName;
+        public readonly bool IsNullable;
+        public readonly int? CharacterMaximumLength;
+
+        public ColumnMetaData(string columnName, string dataType, bool nullable, int? maxLength)
+        {
+            ColumnName = columnName;
+            DataType = dataType;
+            IsNullable = nullable;
+            CharacterMaximumLength = maxLength;
+        }
 
         public override bool Equals(object obj)
         {
@@ -32,7 +32,6 @@ namespace EntityFramework.DbValidator
                 p.DataType == DataType &&
                 p.CharacterMaximumLength == CharacterMaximumLength;
         }
-
         public override int GetHashCode()
         {
             if (DataType.StartsWith("varbinary"))

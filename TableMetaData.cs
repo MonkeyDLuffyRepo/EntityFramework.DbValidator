@@ -35,17 +35,10 @@ namespace EntityFramework.DbValidator
             TableName = table;
             ColumnMetadatas = columns;
         }
-
         public static TableMetaData FromEntityType(EntityType entityType)
         {
-            var columns = entityType.Properties.Select(p =>
-                new ColumnMetaData
-                {
-                    ColumnName = p.Name,
-                    DataType = p.TypeUsage.EdmType.Name,
-                    IsNullable = p.Nullable,
-                    CharacterMaximumLength = p.MaxLength
-                });
+            var columns = entityType.Properties
+                .Select(p => new ColumnMetaData(p.Name, p.TypeUsage.EdmType.Name, p.Nullable, p.MaxLength));
             return new TableMetaData(entityType.Name, columns.ToImmutableList());
         }
 

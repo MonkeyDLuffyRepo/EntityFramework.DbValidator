@@ -41,13 +41,9 @@ ON TABLES.TABLE_NAME = COLUMNS.TABLE_NAME
 WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{DatabaseName}') AND (TABLES.TABLE_SCHEMA = N'dbo')";
             var dbTables = ObjectContext.ExecuteStoreQuery<SqlQueryResult>(sql).ToList().GroupBy(r => r.TableName)
                 .Select(gr => new TableMetaData(gr.Key,
-                    gr.Select(r => new ColumnMetaData
-                    {
-                        ColumnName = r.ColumnName,
-                        IsNullable = r.IsNullable == "YES",
-                        DataType = r.DataType,
-                        CharacterMaximumLength = r.CharacterMaximumLength
-                    }).ToList().ToImmutableList())
+                    gr.Select(r => 
+                        new ColumnMetaData(r.ColumnName, r.DataType, r.IsNullable == "YES", r.CharacterMaximumLength)
+                    ).ToList().ToImmutableList())
                 );
             return new TableCollection(dbTables.ToList());
         }
