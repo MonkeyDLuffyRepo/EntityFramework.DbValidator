@@ -15,7 +15,7 @@ namespace EntityFramework.DbValidator
         private readonly ObjectContext ObjectContext;
         private readonly string DatabaseName;
 
-        private class Result
+        private class SqlQueryResult
         {
             public string TableName { get; set; }
             public string ColumnName { get; set; }
@@ -49,7 +49,7 @@ FROM INFORMATION_SCHEMA.TABLES AS TABLES
 LEFT OUTER JOIN INFORMATION_SCHEMA.COLUMNS AS COLUMNS 
 ON TABLES.TABLE_NAME = COLUMNS.TABLE_NAME 
 WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{DatabaseName}') AND (TABLES.TABLE_SCHEMA = N'dbo')";
-            var dbTables = ObjectContext.ExecuteStoreQuery<Result>(sql).ToList().GroupBy(r => r.TableName)
+            var dbTables = ObjectContext.ExecuteStoreQuery<SqlQueryResult>(sql).ToList().GroupBy(r => r.TableName)
                 .Select(gr => new TableMetaData
                 {
                     TableName = gr.Key,
@@ -64,9 +64,9 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
                 });
             return dbTables.ToList();
         }
-        private static IColumnComparisonResult CheckColumn(string tableName, TableMetaData dbTable, ColumnMetaData storageModelColumn)
+        private static ColumnComparisonResult CheckColumn(string tableName, TableMetaData dbTable, ColumnMetaData storageModelColumn)
         {
-            var dbColumn = dbTable.ColumnMetadatas.Where(c => c.ColumnName == storageModelColumn.ColumnName).FirstOrDefault();
+            var dbColumn = dbTable.GetColumnMetaData(storageModelColumn.ColumnName);
             if (dbColumn != null)
             {
                 if (!dbColumn.Equals(storageModelColumn))
@@ -80,7 +80,7 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
                 return new MessingColumnResult { TableName = tableName, Column = storageModelColumn };
             }
         }
-        private static ITableComparisonResult CheckTable(IEnumerable<TableMetaData> dbTables, TableMetaData storageModelTable)
+        private static TableComparisonResult CheckTable(IEnumerable<TableMetaData> dbTables, TableMetaData storageModelTable)
         {
             var dbTable = dbTables.Where(e => e.TableName == storageModelTable.TableName).FirstOrDefault();
             if (dbTable != null)
@@ -106,7 +106,7 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
             ObjectContext = ((IObjectContextAdapter)context).ObjectContext;
             DatabaseName = context.Database.Connection.Database;
         }
-        public List<ITableComparisonResult> Validate()
+        public List<TableComparisonResult> Validate()
         {
             var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
@@ -118,7 +118,7 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
 
         public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)
         {
-            var results = Validate().Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.GetFix());
+            var results = Validate().Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
             return string.Join(delimiter, results);
         }
     }
