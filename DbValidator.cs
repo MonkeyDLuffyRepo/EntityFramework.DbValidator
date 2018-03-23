@@ -61,7 +61,7 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
 
             return storageModelTables.Tables
                 .Where(t=> tableNames.Contains(t.TableName))
-                .Select(storageModelTable => dbTables.CheckForTable(storageModelTable))
+                .Select(storageModelTable => dbTables.CompareTableTo(storageModelTable))
                 .ToList();
         }
         public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)

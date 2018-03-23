@@ -29,7 +29,7 @@ namespace EntityFramework.DbValidator
         }
     }
 
-    public class ColumnMessingResult : ColumnComparisonResult
+    public class ColumnMissingResult : ColumnComparisonResult
     {
         #region Private Stuff
         private string GetUpgradeScript()
@@ -38,7 +38,7 @@ namespace EntityFramework.DbValidator
             return $"ALTER TABLE {TableName} ADD {Column.ColumnName} {datatype} {(Column.IsNullable ? "NULL" : "NOT NULL")}; ";
         }
         #endregion
-        public ColumnMessingResult(ColumnMetaData column, string tableName) : base(column, tableName)
+        public ColumnMissingResult(ColumnMetaData column, string tableName) : base(column, tableName)
         {
             UpgradeScript = new Lazy<string>(GetUpgradeScript);
         }

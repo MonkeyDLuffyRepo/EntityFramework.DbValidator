@@ -20,10 +20,10 @@ namespace EntityFramework.DbValidator
         }
         #endregion
 
-        public ColumnsMessingResult(string tableName, ImmutableList<ColumnComparisonResult> columnComparisonResults)
+        public ColumnsMessingResult(string tableName, List<ColumnComparisonResult> columnComparisonResults)
         {
             TableName = tableName;
-            ColumnComparisonResults = columnComparisonResults;
+            ColumnComparisonResults = columnComparisonResults.ToImmutableList();
             UpgradeScript = new Lazy<string[]>(GetUpgradeScript);
         }
         public readonly ImmutableList<ColumnComparisonResult> ColumnComparisonResults;

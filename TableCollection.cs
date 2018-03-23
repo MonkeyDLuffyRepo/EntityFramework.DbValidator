@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,14 +16,14 @@ namespace EntityFramework.DbValidator
 
         public IEnumerable<TableMetaData> Tables { get; set; }
 
-        public TableComparisonResult CheckForTable(TableMetaData refTable)
+        public TableComparisonResult CompareTableTo(TableMetaData refTable)
         {
             var dbTable = Tables.Where(e => e.TableName == refTable.TableName).FirstOrDefault();
             if (dbTable != null)
             {
-                var result = dbTable.CheckForMessingColumns(refTable);
+                var result = dbTable.CompareColumns(refTable);
                 if (result == null) return new TableMatchResult(refTable.TableName);
-                return result;
+                return new ColumnsMessingResult(refTable.TableName, result); ;
             }
             else
                 return new TableMessingResult(refTable);

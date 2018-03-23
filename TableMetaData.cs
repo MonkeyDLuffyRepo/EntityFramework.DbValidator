@@ -13,17 +13,17 @@ namespace EntityFramework.DbValidator
             return (!dbColumn.Equals(storageModelColumn)) ?
                  new ColumnMismatchResult(storageModelColumn, TableName) : null;
         }
-        private ColumnComparisonResult CheckColumn(ColumnMetaData storageModelColumn)
+        private ColumnComparisonResult CheckColumn(ColumnMetaData refColumn)
         {
-            var dbColumn = GetColumnMetaData(storageModelColumn.ColumnName);
+            var dbColumn = GetColumnMetaData(refColumn.ColumnName);
             if (dbColumn != null)
-                return CompareColumns(storageModelColumn, dbColumn);
+                return CompareColumns(refColumn, dbColumn);
             else
-                return new ColumnMessingResult(storageModelColumn, TableName);
+                return new ColumnMissingResult(refColumn, TableName);
         }
         private ColumnMetaData GetColumnMetaData(string columnName)
         {
-            return ColumnMetadatas.Where(c => c.ColumnName.ToLower() == columnName.ToLower()).FirstOrDefault();
+            return ColumnMetadatas.Where(c => c.ColumnName == columnName).FirstOrDefault();
         }
         #endregion
 
@@ -42,15 +42,14 @@ namespace EntityFramework.DbValidator
             return new TableMetaData(entityType.Name, columns.ToImmutableList());
         }
 
-        public ColumnsMessingResult CheckForMessingColumns(TableMetaData refTable)
+        public List<ColumnComparisonResult> CompareColumns(TableMetaData refTable)
         {
             var columnResults = refTable.ColumnMetadatas
                 .Select(CheckColumn)
                 .Where(result => result != null)
                 .ToList();
 
-            return columnResults.Count == 0 ? null :
-                new ColumnsMessingResult(refTable.TableName, columnResults.ToImmutableList());
+            return columnResults.Count == 0 ? null : columnResults;
         }
     }
 }
