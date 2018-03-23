@@ -21,11 +21,11 @@ namespace EntityFramework.DbValidator
         {
             Tables = tables;
         }
-        public List<TableComparisonResult> CompareWith(TableCollection refCollection, string[] tableNames)
+        public List<TableComparisonResult> CompareWith(TableCollection refCollection, string[] includedTables)
         {
             var refTables = refCollection.Tables;
-            if (tableNames.Count() != 0)
-                refTables = refTables.Where(t => tableNames.Contains(t.TableName));
+            if (includedTables!= null && includedTables.Count() != 0)
+                refTables = refTables.Where(t => includedTables.Contains(t.TableName));
             return refTables.Select(CompareTableTo).ToList();
         }
     }

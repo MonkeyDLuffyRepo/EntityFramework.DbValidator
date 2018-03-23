@@ -39,7 +39,7 @@ ON TABLES.TABLE_NAME = COLUMNS.TABLE_NAME
 WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{DatabaseName}') AND (TABLES.TABLE_SCHEMA = N'dbo')";
             var dbTables = ObjectContext.ExecuteStoreQuery<SqlQueryResult>(sql).ToList().GroupBy(r => r.TableName)
                 .Select(gr => new TableMetaData(gr.Key,
-                    gr.Select(r => 
+                    gr.Select(r =>
                         new ColumnMetaData(r.ColumnName, r.DataType, r.IsNullable == "YES", r.CharacterMaximumLength)
                     ).ToList().ToImmutableList())
                 );
@@ -52,15 +52,15 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
             ObjectContext = ((IObjectContextAdapter)context).ObjectContext;
             DatabaseName = context.Database.Connection.Database;
         }
-        public List<TableComparisonResult> Validate(string[] includedTables)
+        public List<TableComparisonResult> Validate(string[] includedTables = null)
         {
             var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
             return dbTables.CompareWith(storageModelTables, includedTables);
         }
-        public string GetUpgradeSqlScript(string[] includedTables, string delimiter = null)
+        public string GetUpgradeSqlScript(string[] includedTables = null, string delimiter = null)
         {
-            var results = Validate(includedTables).Where(r => includedTables.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
+            var results = Validate(includedTables).SelectMany(r => r.UpgradeScript.Value);
             return string.Join(delimiter, results);
         }
     }
