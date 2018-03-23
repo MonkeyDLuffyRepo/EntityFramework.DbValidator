@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data.Entity;
 using System.Data.Entity.Core.Metadata.Edm;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity.Infrastructure;
-using System.Data.SqlClient;
 using System.Linq;
 
 namespace EntityFramework.DbValidator
@@ -54,19 +52,15 @@ WHERE (TABLES.TABLE_TYPE = 'BASE TABLE') AND (TABLES.TABLE_CATALOG = N'{Database
             ObjectContext = ((IObjectContextAdapter)context).ObjectContext;
             DatabaseName = context.Database.Connection.Database;
         }
-        public List<TableComparisonResult> Validate(string[] tableNames)
+        public List<TableComparisonResult> Validate(string[] includedTables)
         {
             var storageModelTables = GetStorageModelTables();
             var dbTables = GetDbTables();
-
-            return storageModelTables.Tables
-                .Where(t=> tableNames.Contains(t.TableName))
-                .Select(storageModelTable => dbTables.CompareTableTo(storageModelTable))
-                .ToList();
+            return dbTables.CompareWith(storageModelTables, includedTables);
         }
-        public string GetUpgradeSqlScript(string[] tableNames, string delimiter = null)
+        public string GetUpgradeSqlScript(string[] includedTables, string delimiter = null)
         {
-            var results = Validate(tableNames).Where(r => tableNames.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
+            var results = Validate(includedTables).Where(r => includedTables.Contains(r.TableName)).SelectMany(r => r.UpgradeScript.Value);
             return string.Join(delimiter, results);
         }
     }

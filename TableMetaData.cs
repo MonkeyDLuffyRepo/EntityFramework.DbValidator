@@ -8,18 +8,16 @@ namespace EntityFramework.DbValidator
     public class TableMetaData
     {
         #region Private Stuff
-        private ColumnMismatchResult CompareColumns(ColumnMetaData storageModelColumn, ColumnMetaData dbColumn)
+        private ColumnMismatchResult CompareColumns(ColumnMetaData refColumn, ColumnMetaData dbColumn)
         {
-            return (!dbColumn.Equals(storageModelColumn)) ?
-                 new ColumnMismatchResult(storageModelColumn, TableName) : null;
+            return (!dbColumn.Equals(refColumn)) ?
+                 new ColumnMismatchResult(refColumn, TableName) : null;
         }
         private ColumnComparisonResult CheckColumn(ColumnMetaData refColumn)
         {
             var dbColumn = GetColumnMetaData(refColumn.ColumnName);
-            if (dbColumn != null)
-                return CompareColumns(refColumn, dbColumn);
-            else
-                return new ColumnMissingResult(refColumn, TableName);
+            if (dbColumn == null) return new ColumnMissingResult(refColumn, TableName);
+            return CompareColumns(refColumn, dbColumn);                
         }
         private ColumnMetaData GetColumnMetaData(string columnName)
         {
@@ -32,7 +30,7 @@ namespace EntityFramework.DbValidator
 
         public TableMetaData(string table, ImmutableList<ColumnMetaData> columns)
         {
-            TableName = table;
+            TableName = table.ToLower();
             ColumnMetadatas = columns;
         }
         public static TableMetaData FromEntityType(EntityType entityType)
